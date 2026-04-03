@@ -1,4 +1,5 @@
 ### IntelliJ IDEA ###
+META-INF/
 out/
 src/
 !**/src/main/**/out/

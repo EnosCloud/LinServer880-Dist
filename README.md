@@ -1,146 +1,113 @@
-# LinServer880
+# LinServer880-Dist
 
-Lineage 私服遊戲伺服器專案（Java 21），包含遊戲核心、資料表、地圖與工具腳本。
+這是一個提供給一般使用者下載與直接架設的 Lineage 伺服器發佈版。
 
-本次版本已完成 UTF-8 收斂：核心讀取邏輯、設定檔與基線 SQL 同步到 UTF-8 流程，並提供可回滾的資料庫 migration。
+本倉庫重點放在可執行的伺服器啟動檔、資料、設定檔與資料庫內容，方便使用者下載後完成環境建置與啟動，不需要閱讀開發歷史紀錄。
 
-## 專案目標
+## 適用對象
 
-- 提供可維運的 Lineage 遊戲伺服器核心。
-- 支援傳統 Socket 與可切換的 Netty 網路層。
-- 提供可重建的資料庫基線與遷移腳本。
-- 降低多編碼（Big5/UTF-8）混用造成的亂碼與維護成本。
+- 想直接下載並架設伺服器的使用者
+- 想測試遊戲內容、地圖、設定檔與資料表的使用者
+- 不需要原始開發歷史，只需要可執行版本的人
 
-## 技術與環境
+## 需求環境
 
-- Java: 21
-- Database: MariaDB / MySQL 相容
-- Build: Windows Batch（`BuildServer_NoObf.bat`、`BuildServer_Obf.bat`）
-- Runtime: `ServerStart.bat` 啟動 `Server_Game.jar`
-- Logging: Lombok `1.18.44` + SLF4J + reload4j（沿用 `config/log4j.properties`，建置腳本固定使用/驗證 JDK21 編譯鏈）
+- 作業系統：Windows 10 / 11 或相容的 Windows 環境
+- Java：JDK 21
+- 資料庫：MariaDB 10.x 或 MySQL 相容版本
+- 記憶體：建議至少 4 GB，較穩定建議 8 GB 以上
+- 埠口：需預留伺服器與登入端使用的網路埠
 
-## 主要目錄
+## 目錄說明
 
-- `src/`: 遊戲伺服器 Java 原始碼
-- `config/`: 伺服器設定（含語系與編碼）
-- `database/`: 基線 SQL 與 migration
-- `data/`, `maps/`, `skills/`, `img/`: 遊戲資料
-- `jar/`: 依賴套件
-- `tools/`: 開發與維護工具
+- `ServerStart.bat`：伺服器啟動入口
+- `config/`：伺服器核心設定檔
+- `database/`：資料庫初始化與資料表內容
+- `data/`：NPC、文字、行為等資料
+- `maps/`：地圖資料
+- `jar/`：伺服器執行所需的第三方套件
 
-## UTF-8 收斂重點（2026-04-03）
+## 安裝前準備
 
-### 1) 設定層
+1. 安裝 JDK 21，並確認 `java -version` 可正常執行。
+2. 安裝 MariaDB 或 MySQL，建立一個新的資料庫。
+3. 準備可寫入的資料夾，將此倉庫完整解壓縮到固定路徑。
+4. 若防火牆有開啟，先預留伺服器要使用的連線埠。
 
-- `config/server.properties`
-  - 新增 `ClientEncoding = UTF8`
-  - 在繁中語系（`ClientLanguage = 3`）下，明確使用 UTF-8。
+## 初次架設步驟
 
-- `src/com/lineage/config/Config.java`
-  - 語系編碼陣列中的繁中項改為 UTF-8。
-  - 增加 `ClientLanguage` 邊界保護，避免索引越界。
-  - 支援從 `ClientEncoding` 讀取覆寫值，空值時回退到語系預設編碼。
+### 1. 匯入資料庫
 
-### 2) 讀表層（de_* datatables）
+請先將 `database/880_new.sql` 匯入到你建立的新資料庫中。
 
-以下檔案移除 Big5 後備欄位讀取，改為只讀 UTF-8 主欄位：
+建議做法：
 
-- `src/com/lineage/server/datatables/DeClanTable.java`
-- `src/com/lineage/server/datatables/DeNameTable.java`
-- `src/com/lineage/server/datatables/DeShopChatTable.java`
-- `src/com/lineage/server/datatables/DeGlobalChatTable.java`
-- `src/com/lineage/server/datatables/DeTitleTable.java`
+1. 先建立一個空白資料庫。
+2. 使用資料庫工具匯入 `database/880_new.sql`。
+3. 匯入完成後，確認資料表有正常建立。
 
-### 3) 資料庫層
+### 2. 設定資料庫連線
 
-- `database/880_new.sql`
-  - 移除 `de_*` 區塊中的 `*_big5` 欄位。
-  - 同步調整 INSERT 欄位數，確保與新欄位結構一致。
-  - 正規化為 UTF-8（無 BOM）。
+請調整 `config/server.properties` 內的資料庫連線資訊，至少確認以下項目正確：
 
-- 新增 migration：
-  - `database/migrations/20260403_utf8_drop_big5_columns.sql`
-  - `database/migrations/20260403_utf8_drop_big5_columns_rollback.sql`
+- 資料庫主機位置
+- 資料庫名稱
+- 使用者名稱
+- 密碼
+- 伺服器與客戶端對應的編碼設定
 
-## Migration 執行建議
+若你要對外提供一般繁體中文客戶端，請確認 `ClientLanguage` 與 `ClientEncoding` 符合你的客戶端設定。
 
-1. 先備份資料庫。
-2. 在目標 DB 執行：
-   - `database/migrations/20260403_utf8_drop_big5_columns.sql`
-3. 驗證伺服器啟動與遊戲內顯示字串正常。
-4. 若需還原，執行：
-   - `database/migrations/20260403_utf8_drop_big5_columns_rollback.sql`
+### 3. 檢查伺服器執行環境
 
-## 建置與啟動
+請確認 JDK 21 已正確安裝，且系統路徑已能找到 `java`。
 
-### 建置（不混淆）
+如果你同時安裝了多個 Java 版本，請讓這個專案使用 JDK 21，不要誤用較舊版本。
 
-在專案根目錄執行：
+### 4. 啟動伺服器
 
-```bat
-BuildServer_NoObf.bat
-```
+雙擊 `ServerStart.bat` 即可啟動伺服器。
 
-### 建置（混淆）
+## 建議啟動流程
 
-```bat
-BuildServer_Obf.bat
-```
+1. 確認資料庫已匯入完成。
+2. 確認 `config/server.properties` 已填入正確資訊。
+3. 確認 JDK 21 可用。
+4. 執行 `ServerStart.bat`。
+5. 觀察啟動畫面是否有錯誤訊息。
 
-### 啟動
+## 常見問題
 
-```bat
-ServerStart.bat
-```
+### 伺服器無法啟動
 
-## 維運注意事項
+- 確認 JDK 21 是否安裝正確。
+- 確認 `config/server.properties` 的資料庫資訊是否正確。
+- 確認資料庫是否已匯入 `database/880_new.sql`。
+- 確認使用的埠口沒有被其他程式佔用。
 
-- 優先維持 UTF-8 單一流程，避免新增 `*_big5` 雙軌資料。
-- 若調整 `de_*` 表結構，請同步檢查 datatable 載入邏輯。
-- 提交前建議掃描關鍵字（`big5`, `ms950`）避免回歸。
+### 文字顯示亂碼
 
-## 變更檔案（本次 UTF-8 收斂）
+- 確認客戶端與伺服器編碼是否一致。
+- 確認 `config/server.properties` 的語系設定是否與實際客戶端相符。
+- 若你是使用繁中客戶端，請優先確認編碼設定與客戶端版本一致。
 
-- `config/server.properties`
-- `database/880_new.sql`
-- `database/migrations/20260403_utf8_drop_big5_columns.sql`
-- `database/migrations/20260403_utf8_drop_big5_columns_rollback.sql`
-- `src/com/lineage/config/Config.java`
-- `src/com/lineage/server/datatables/DeClanTable.java`
-- `src/com/lineage/server/datatables/DeGlobalChatTable.java`
-- `src/com/lineage/server/datatables/DeNameTable.java`
-- `src/com/lineage/server/datatables/DeShopChatTable.java`
-- `src/com/lineage/server/datatables/DeTitleTable.java`
+### 資料庫連線失敗
 
-## Commit 說明紀錄
+- 檢查資料庫服務是否啟動。
+- 檢查帳號密碼是否正確。
+- 檢查資料庫主機位址是否能從伺服器機器連線。
 
-以下為近期主要 commit 的用途說明，便於追蹤本專案改動脈絡。
+## 使用提醒
 
-- `524e0f6` - `chore: rename project root to LinServer880`
-  - 專案根目錄命名整理，統一工作路徑與建置目錄。
-- `666fc59` - `fix: add recovered quest classes to runtime classpath`
-  - 修復任務類別遺失造成的執行期 classpath 問題。
-- `813df51` - `chore: sync current baseline before utf8 migration`
-  - 在 UTF-8 遷移前同步基線，降低後續衝突風險。
-- `b6d7cb9` - `chore: enforce utf8-only build and convert last legacy java`
-  - 建置流程收斂為 UTF-8，並完成最後一批 legacy Java 轉換。
-- `456e373` - `refactor: use client language charset in C_Shop`
-  - 商店封包改為依語系編碼處理，提升跨語系相容性。
-- `3fcd66a` - `refactor: prefer utf8 fields with big5 fallback in de tables`
-  - de_* 讀表邏輯優先 UTF-8，保留 Big5 fallback 過渡行為。
-- `30b1a76` - `chore: add utf8 backfill and rollback sql scripts`
-  - 加入 UTF-8 回填與回滾 SQL，確保遷移可逆。
-- `9c795d5` - `feat: finalize UTF-8 migration and add project README`
-  - 完成 UTF-8 收尾（設定、讀表、資料庫基線）並新增 README。
-- `008ef25` - `chore: ignore IDEA workspace file and stop tracking workspace.xml`
-  - 將 IDE 工作區檔從版控中移除，避免本機設定污染提交。
-- `d8cdab8` - `build: enable lombok annotation processing in batch builds`
-  - 在 NoObf/Obf 建置腳本加入 Lombok 註解處理能力。
-- `本次分階段提交(1)` - `refactor: migrate project logging to lombok @Slf4j`
-  - 全案將 `apache commons logging` 與 `java.util.logging` 收斂到 `@Slf4j`。
-  - 只調整 log print 與 logger 宣告，不更動業務邏輯。
-- `本次分階段提交(2)` - `docs: update README with logging migration notes`
-  - 補充 Lombok/@Slf4j 導入脈絡與本次 commit 說明。
-- `本次獨立提交` - `chore: remove decompiler footer comments across src`
-  - 清理 src 內反編譯尾註解（Location / Qualified Name / JD-Core）。
-  - 僅移除註解，不調整業務邏輯，並已重新建置驗證可正常打包。
+- 本倉庫保留的是可供下載與架設使用的發佈內容。
+- 請先備份現有資料庫，再進行任何匯入或覆蓋動作。
+- 若你自行修改 `config/`、`database/` 或 `data/`，請先保留原始備份。
+- 若需要開放給玩家連線，請先確認防火牆與路由器轉發設定。
+
+## 啟動檔案清單
+
+- `ServerStart.bat`
+
+## 授權與分發
+
+此倉庫以實際使用與架設為導向。若你要在其他環境重新分發，請先確認相關資源、套件與遊戲資料的使用權限。
