@@ -1,0 +1,49 @@
+### IntelliJ IDEA ###
+out/
+src/
+!**/src/main/**/out/
+!**/src/test/**/out/
+.kotlin
+.idea
+.idea/workspace.xml
+LinServer880.iml
+
+### Eclipse ###
+.apt_generated
+.classpath
+.factorypath
+.project
+.settings
+.springBeans
+.sts4-cache
+bin/
+!**/src/main/**/bin/
+!**/src/test/**/bin/
+
+### NetBeans ###
+/nbproject/private/
+/nbbuild/
+/dist/
+/nbdist/
+/.nb-gradle/
+
+### VS Code ###
+.vscode/
+
+### Mac OS ###
+.DS_Store
+
+### Large Files ###
+back/
+BuildServer_NoObf.bat
+BuildServer_Obf.bat
+
+### Logs ###
+loginfo/*.log
+logs/
+
+### Auto-generated ###
+ENCODING_AUDIT.md
+JIRA_TASK_BREAKDOWN.md
+TODO_AUDIT.md
+tools/
