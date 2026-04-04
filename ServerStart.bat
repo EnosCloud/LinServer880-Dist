@@ -31,7 +31,7 @@ if not "%errorlevel%"=="0" (
 		pause >nul
 		exit /b 1
 	)
-	powershell -NoProfile -ExecutionPolicy Bypass -Command "Start-Process -FilePath '%~f0' -Verb RunAs -ArgumentList '--elevated' -WorkingDirectory '%~dp0'"
+	powershell -NoProfile -ExecutionPolicy Bypass -Command "Start-Process -FilePath $env:ComSpec -Verb RunAs -ArgumentList '/c','""%~f0"" --elevated' -WorkingDirectory '%~dp0'"
 	exit /b
 )
 
