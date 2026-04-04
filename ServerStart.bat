@@ -3,6 +3,8 @@ setlocal EnableExtensions EnableDelayedExpansion
 chcp 65001 >nul
 COLOR 17
 
+if /i "%~1"=="--elevated" shift
+
 timeout /t 1 /nobreak >nul
 cls
 goto begin
@@ -22,10 +24,15 @@ title 880TEST - LinServer880 伺服器啟動
 
 net session >nul 2>&1
 if not "%errorlevel%"=="0" (
-	echo 請以系統管理員身分執行此批次檔。
-	echo 目前權限不足，無法繼續啟動專案。
-	pause >nul
-	exit /b 1
+	echo 目前沒有管理員權限。
+	choice /c YN /m "是否要立即提升為管理員權限"
+	if errorlevel 2 (
+		echo 已取消提升，批次檔將結束。
+		pause >nul
+		exit /b 1
+	)
+	powershell -NoProfile -ExecutionPolicy Bypass -Command "Start-Process -FilePath '%~f0' -Verb RunAs -ArgumentList '--elevated' -WorkingDirectory '%~dp0'"
+	exit /b
 )
 
 set "JAVA_CMD="
