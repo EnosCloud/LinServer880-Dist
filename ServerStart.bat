@@ -2,6 +2,7 @@
 setlocal EnableExtensions EnableDelayedExpansion
 chcp 65001 >nul
 COLOR 17
+pushd "%~dp0"
 
 if /i "%~1"=="--elevated" shift
 

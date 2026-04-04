@@ -2,6 +2,7 @@
 setlocal EnableExtensions
 chcp 65001 >nul
 COLOR 17
+pushd "%~dp0"
 
 set "JAVA_CMD=%~1"
 if not defined JAVA_CMD set "JAVA_CMD=java"
