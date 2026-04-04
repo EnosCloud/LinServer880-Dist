@@ -20,30 +20,36 @@ goto begin
 :begin
 title 880TEST - LinServer880 伺服器啟動
 
-set "JAVA_CMD="
-set "JAVA_VERSION="
-for /f "delims=" %%J in ('where java 2^>nul') do (
-	for /f "tokens=3" %%V in ('"%%J" -version 2^>^&1 ^| findstr /i /c:"version"') do (
-		set "JAVA_VERSION=%%~V"
-	)
-	if defined JAVA_VERSION (
-		if "!JAVA_VERSION:~0,2!"=="21" (
-			set "JAVA_CMD=%%J"
-			goto java_found
-		)
-	)
-	set "JAVA_VERSION="
+net session >nul 2>&1
+if not "%errorlevel%"=="0" (
+	echo 請以系統管理員身分執行此批次檔。
+	echo 目前權限不足，無法繼續啟動專案。
+	pause >nul
+	exit /b 1
 )
 
-:java_found
+set "JAVA_CMD="
+set "JAVA_VERSION="
+for /f "tokens=3" %%V in ('java -version 2^>^&1 ^| findstr /i /c:"version"') do (
+	set "JAVA_VERSION=%%~V"
+)
+
+if defined JAVA_VERSION if "!JAVA_VERSION:~0,2!"=="21" (
+	set "JAVA_CMD=java"
+)
+
 if defined JAVA_CMD (
 	echo 已找到 Java 21：!JAVA_VERSION!
 	echo 支援的發行版包含 Eclipse Adoptium、Oracle 等，只要版本為 21 即可。
 	echo 此環境符合專案需求，按任意鍵開始執行專案...
 	pause >nul
 ) else (
-	echo 未找到符合專案需求的 Java 21 環境 [請安裝 Java 21 後再重新啟動]
-	echo 支援的發行版包含 Eclipse Adoptium、Oracle 等，只要版本為 21 即可。
+	if defined JAVA_VERSION (
+		echo 目前偵測到的 Java 版本為：!JAVA_VERSION!
+		echo 此環境不符合專案需求，請安裝或切換至 Java 21 後再重新執行。
+	) else (
+		echo 未找到可用的 Java 指令，請先安裝 Java 21。
+	)
 	pause >nul
 	exit /b 1
 )
