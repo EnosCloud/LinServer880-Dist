@@ -4,10 +4,12 @@
 
 本倉庫重點放在可執行的伺服器啟動檔、資料、設定檔與資料庫內容，方便使用者下載後完成環境建置與啟動，不需要閱讀開發歷史紀錄。
 
-## 最近整理
+## 專案現況
 
-- `config/` 內的設定檔已重新美化，註解與公告文字已整理為更適合一般使用者閱讀的繁體中文。
-- 所有設定值維持不變，只調整說明文字與版面，方便快速確認每個項目的用途。
+- `00-ServerStart.bat` 是主要啟動入口，會先檢查管理員權限與 Java 版本，再交由 `01-ServerRun.bat`。
+- `01-ServerRun.bat` 會執行伺服器啟動循環，若偵測到更新包也會自動套用。
+- `BuildServer_NoObf.bat` 與 `BuildServer_Obf.bat` 已保留為建置腳本，分別對應一般打包與混淆打包。
+- `config/`、`database/`、`data/`、`maps/`、`jar/` 等目錄是此發佈版的核心內容。
 
 ## 適用對象
 
@@ -25,12 +27,24 @@
 
 ## 目錄說明
 
-- `ServerStart.bat`：伺服器啟動入口
-- `config/`：伺服器核心設定檔，包含已整理過的註解與公告文字
-- `database/`：資料庫初始化與資料表內容
-- `data/`：NPC、文字、行為等資料
-- `maps/`：地圖資料
-- `jar/`：伺服器執行所需的第三方套件
+- `00-ServerStart.bat`：主要啟動入口，先檢查管理員權限與 Java 版本，再呼叫 `01-ServerRun.bat`
+- `01-ServerRun.bat`：伺服器執行循環與更新包套用邏輯
+- `BuildServer_NoObf.bat`：不混淆的建置腳本，會編譯原始碼並產生 `Server_Game.jar`
+- `BuildServer_Obf.bat`：混淆建置腳本，額外需要 `tools/proguard.jar`
+- `Server_Game.jar`：目前可直接執行的伺服器主程式封裝
+- `00-Environment Install/`：安裝或環境支援檔案
+- `01-Game Login/`：登入相關元件與客戶端輔助檔案
+- `back/`：備份或保留用資料
+- `config/`：伺服器設定檔，包含連線、公告、掉寶與其他核心參數
+- `data/`：NPC、文字、道具與其他遊戲資料
+- `database/`：資料庫初始化 SQL，例如 `880_new.sql`
+- `img/`：圖片與介面資源
+- `jar/`：執行與建置所需的第三方相依套件
+- `loginfo/`：記錄與資訊輸出資料
+- `logs/`：執行與建置過程產生的日誌
+- `maps/`：地圖資料與地圖設定
+- `src/`：Java 原始碼
+- `skills/`：專案維運與自動化相關文件
 
 ## 安裝前準備
 
@@ -71,15 +85,23 @@
 
 ### 4. 啟動伺服器
 
-雙擊 `ServerStart.bat` 即可啟動伺服器。
+雙擊 `00-ServerStart.bat` 即可啟動伺服器。
 
 ## 建議啟動流程
 
 1. 確認資料庫已匯入完成。
 2. 確認 `config/server.properties` 已填入正確資訊。
 3. 確認 JDK 21 可用。
-4. 執行 `ServerStart.bat`。
+4. 執行 `00-ServerStart.bat`。
 5. 觀察啟動畫面是否有錯誤訊息。
+
+## 建置流程
+
+如果你要重新打包伺服器主程式，請使用對應的批次檔：
+
+1. 一般打包：執行 `BuildServer_NoObf.bat`。
+2. 混淆打包：先確認 `tools/proguard.jar` 已放入，再執行 `BuildServer_Obf.bat`。
+3. 打包完成後，`Server_Game.jar` 會更新為新的版本。
 
 ## 常見問題
 
@@ -111,7 +133,10 @@
 
 ## 啟動檔案清單
 
-- `ServerStart.bat`
+- `00-ServerStart.bat`
+- `01-ServerRun.bat`
+- `BuildServer_NoObf.bat`
+- `BuildServer_Obf.bat`
 
 ## 授權與分發
 
